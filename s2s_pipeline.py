@@ -265,6 +265,12 @@ class SocketSender:
 
 @dataclass
 class VADHandlerArguments:
+    vad_device: str = field(
+        default="cuda",
+        metadata={
+            "help": "The device type on which the model will run. Default is 'cuda' for GPU acceleration."
+        }
+    )
     thresh: float = field(
         default=0.3,
         metadata={
@@ -312,6 +318,7 @@ class VADHandler(BaseHandler):
     def setup(
             self, 
             should_listen,
+            vad_device="cuda",
             thresh=0.3, 
             sample_rate=16000, 
             min_silence_ms=1000,
@@ -320,6 +327,7 @@ class VADHandler(BaseHandler):
             speech_pad_ms=30,
 
         ):
+        self.device = vad_device
         self.should_listen = should_listen
         self.sample_rate = sample_rate
         self.min_silence_ms = min_silence_ms
@@ -467,6 +475,7 @@ class WhisperSTTHandler(BaseHandler):
         else:
             warmup_gen_kwargs = self.gen_kwargs
 
+        torch.cuda.set_device(self.device)  
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
 
@@ -647,6 +656,7 @@ class LanguageModelHandler(BaseHandler):
 
         n_steps = 2
 
+        torch.cuda.set_device(self.device)  
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
 
@@ -818,6 +828,7 @@ class ParlerTTSHandler(BaseHandler):
     def warmup(self):
         logger.info(f"Warming up {self.__class__.__name__}")
 
+        torch.cuda.set_device(self.device)  
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
 
